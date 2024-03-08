@@ -1,4 +1,4 @@
-package ru.practicum.shareit.request.dto;
+package ru.practicum.shareit.item.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -6,15 +6,22 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import ru.practicum.shareit.user.User;
 
-import java.time.LocalDateTime;
+import javax.validation.constraints.Size;
 
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemRequestDto {
+public class ItemDtoUpdate {
     private Integer id;
+
+    @Size(max = 50)
+    private String name;
+
+    @Size(max = 250)
     private String description;
-    private User requestor;
-    private LocalDateTime created;
+
+    private Boolean available;
+
+    private User owner;
 }
