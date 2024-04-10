@@ -1,11 +1,9 @@
 package ru.practicum.shareit.item.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.user.User;
 
 import javax.validation.constraints.NotBlank;
@@ -16,8 +14,7 @@ import javax.validation.constraints.Size;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemDto {
-    private Integer id;
+public class ItemDtoCreate {
 
     @NotBlank
     @Size(max = 50)
@@ -30,9 +27,5 @@ public class ItemDto {
     @NotNull
     private Boolean available;
 
-    @NotNull
     private User owner;
-
-    @JsonIgnore
-    private ItemRequest request;
 }

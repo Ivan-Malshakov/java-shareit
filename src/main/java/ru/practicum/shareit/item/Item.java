@@ -1,8 +1,8 @@
-package ru.practicum.shareit.item.dto;
+package ru.practicum.shareit.item;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import ru.practicum.shareit.request.ItemRequest;
@@ -13,10 +13,10 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 @Data
+@EqualsAndHashCode(of = {"id"})
 @SuperBuilder
 @NoArgsConstructor
-@AllArgsConstructor
-public class ItemDto {
+public class Item {
     private Integer id;
 
     @NotBlank
@@ -35,4 +35,5 @@ public class ItemDto {
 
     @JsonIgnore
     private ItemRequest request;
+
 }
