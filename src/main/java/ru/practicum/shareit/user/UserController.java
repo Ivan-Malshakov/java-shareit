@@ -38,8 +38,7 @@ public class UserController {
             throw new ConstraintViolationException("Invalid userId", new HashSet<>());
         }
 
-        User user = userMapper.toUser(userDto);
-        User updatedUser = service.update(userId, user);
+        User updatedUser = service.update(userId, userDto);
         log.info("Update user {}.", updatedUser);
         return userMapper.toUserDto(updatedUser);
     }

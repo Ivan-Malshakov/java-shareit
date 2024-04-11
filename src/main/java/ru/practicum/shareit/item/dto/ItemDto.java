@@ -1,16 +1,15 @@
 package ru.practicum.shareit.item.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import ru.practicum.shareit.request.ItemRequest;
-import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.booking.dto.BookingResponseToItemDto;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @SuperBuilder
@@ -20,19 +19,15 @@ public class ItemDto {
     private Integer id;
 
     @NotBlank
-    @Size(max = 50)
     private String name;
 
     @NotBlank
-    @Size(max = 250)
     private String description;
 
     @NotNull
     private Boolean available;
 
-    @NotNull
-    private User owner;
-
-    @JsonIgnore
-    private ItemRequest request;
+    private BookingResponseToItemDto nextBooking;
+    private BookingResponseToItemDto lastBooking;
+    private List<CommentResponseDto> comments = new ArrayList<>();
 }

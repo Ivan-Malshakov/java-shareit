@@ -1,4 +1,4 @@
-package ru.practicum.shareit.user.storage;
+package ru.practicum.shareit.user.storage.memory;
 
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.exception.exceptions.ConflictEmailException;
