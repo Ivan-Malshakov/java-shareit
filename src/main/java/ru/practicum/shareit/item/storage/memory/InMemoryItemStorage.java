@@ -1,4 +1,4 @@
-package ru.practicum.shareit.item.storage;
+package ru.practicum.shareit.item.storage.memory;
 
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.exception.exceptions.DataNotFoundException;
