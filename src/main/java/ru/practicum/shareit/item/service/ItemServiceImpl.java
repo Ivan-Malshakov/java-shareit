@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.BookingMapper;
@@ -28,6 +29,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
@@ -53,6 +55,8 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto updateItem(ItemDto request, Integer userId, Integer itemId) {
         Item item = jpaItemRepository.findById(itemId).get();
         if (!Objects.equals(item.getOwner().getId(), userId)) {
+            log.warn("User with id = " + userId + " does not have rights to change item " +
+                    "because he is not its owner");
             throw new ForbiddenUpdateException("User with id = " + userId + " does not have rights to change item " +
                     "because he is not its owner");
         }
@@ -76,6 +80,7 @@ public class ItemServiceImpl implements ItemService {
         User user = userService.getData(userId);
         Optional<Item> item = jpaItemRepository.findById(id);
         if (item.isEmpty()) {
+            log.warn("Item with id = " + id + " not found");
             throw new DataNotFoundException("Item with id = " + id + " not found");
         }
         ItemDto itemResponse = itemMapper.toDto(item.get());
@@ -144,10 +149,13 @@ public class ItemServiceImpl implements ItemService {
         User user = userService.getData(userId);
         Optional<Item> item = jpaItemRepository.findById(itemId);
         if (item.isEmpty()) {
+            log.warn("Item with = " + itemId + " not found");
             throw new DataNotFoundException("Item with = " + itemId + " not found");
         }
         if (jpaBookingRepository.findBookingByItem_IdAndBooker_IdAndEndBeforeAndStatus(itemId, userId,
                 research.getCreated(), BookingStatus.APPROVED).isEmpty()) {
+            log.warn("Completed bookings for a user with id = " +
+                    userId + " for item with id = " + itemId + "not found");
             throw new BookingNotFoundException("Completed bookings for a user with id = " +
                     userId + " for item with id = " + itemId + "not found");
         }
@@ -161,6 +169,7 @@ public class ItemServiceImpl implements ItemService {
     public Item getItemToBooking(Integer id) {
         Optional<Item> item = jpaItemRepository.findById(id);
         if (item.isEmpty()) {
+            log.warn("Item with = " + id + " not found");
             throw new DataNotFoundException("Item with = " + id + " not found");
         }
         return item.get();

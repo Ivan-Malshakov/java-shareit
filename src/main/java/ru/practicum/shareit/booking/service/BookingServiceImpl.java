@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.Booking;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
@@ -34,16 +36,23 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponseDto saveBooking(BookingResearchDto bookingDto, Integer userId) {
         User booker = userService.getData(userId);
         Item item = itemService.getItemToBooking(bookingDto.getItemId());
+        Integer itemId = item.getId();
+        Integer bookerId = booker.getId();
+
         if (bookingDto.getEnd().isBefore(bookingDto.getStart())
                 || bookingDto.getStart().isEqual(bookingDto.getEnd())) {
+            log.warn("The end date of booking is earlier or equal than to the start date");
             throw new BookingDateException("The end date of booking is earlier or equal than to the start date");
         }
         if (!item.getAvailable()) {
-            throw new UnavailableItemException("Item with id = " + item.getId() + " unavailable");
+            log.warn("Item with id = " + itemId + " unavailable");
+            throw new UnavailableItemException("Item with id = " + itemId + " unavailable");
         }
-        if (item.getOwner().getId().longValue() == booker.getId()) {
-            throw new ForbiddenAccessException("User with id = " + booker.getId() + " is the owner of item " +
-                    "with id = " + item.getId());
+        if (item.getOwner().getId().longValue() == bookerId) {
+            log.warn("User with id = " + bookerId + " is the owner of item " +
+                    "with id = " + itemId);
+            throw new ForbiddenAccessException("User with id = " + bookerId + " is the owner of item " +
+                    "with id = " + itemId);
         }
         Booking research = bookingMapper.toBooking(bookingDto);
         research.setStatus(BookingStatus.WAITING);
@@ -56,15 +65,20 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     public BookingResponseDto approvedOrRejectBooking(Integer userId, Integer bookingId, Boolean approved) {
         User owner = userService.getData(userId);
+        Integer ownerId = owner.getId();
         Optional<Booking> booking = bookingRepository.findById(bookingId);
         if (booking.isEmpty()) {
+            log.warn("Booking with id = " + bookingId + " not found");
             throw new DataNotFoundException("Booking with id = " + bookingId + " not found");
         }
-        if (booking.get().getItem().getOwner().getId().longValue() != owner.getId()) {
-            throw new ForbiddenAccessException("User with id = " + owner.getId() + " is not the owner of item" +
+        if (booking.get().getItem().getOwner().getId().longValue() != ownerId) {
+            log.warn("User with id = " + ownerId + " is not the owner of item" +
+                    " с id = " + booking.get().getItem().getId());
+            throw new ForbiddenAccessException("User with id = " + ownerId + " is not the owner of item" +
                     " с id = " + booking.get().getItem().getId());
         }
         if (booking.get().getStatus() != BookingStatus.WAITING) {
+            log.warn("Not access to status change");
             throw new ForbiddenAccessChangeStatusException("Not access to status change");
         }
         if (approved) {
@@ -80,10 +94,14 @@ public class BookingServiceImpl implements BookingService {
         User user = userService.getData(userId);
         Optional<Booking> booking = bookingRepository.findById(bookingId);
         if (booking.isEmpty()) {
+            log.warn("Booking with id = " + bookingId + " not found");
             throw new DataNotFoundException("Booking with id = " + bookingId + " not found");
         }
         if (booking.get().getItem().getOwner().getId().longValue() != user.getId()
                 && user.getId().longValue() != booking.get().getBooker().getId()) {
+            log.warn("User with id = " + user.getId() + " is not the owner of item" +
+                    " with id = " + booking.get().getItem().getId() + " or not the owner of booking with id = "
+                    + booking.get().getId());
             throw new ForbiddenAccessException("User with id = " + user.getId() + " is not the owner of item" +
                     " with id = " + booking.get().getItem().getId() + " or not the owner of booking with id = "
                     + booking.get().getId());
@@ -122,6 +140,7 @@ public class BookingServiceImpl implements BookingService {
                 bookings = bookingRepository.findBookingByBooker_IdAndStatus(userId, BookingStatus.REJECTED);
                 break;
             default:
+                log.warn("Unknown state: " + state);
                 throw new StateNotFoundException("Unknown state: " + state);
         }
         return bookingMapper.toListDto(bookings);
@@ -158,6 +177,7 @@ public class BookingServiceImpl implements BookingService {
                 bookings = bookingRepository.findBookingByItem_Owner_IdAndStatus(userId, BookingStatus.REJECTED);
                 break;
             default:
+                log.warn("Unknown state: " + state);
                 throw new StateNotFoundException("Unknown state: " + state);
         }
         return bookingMapper.toListDto(bookings);

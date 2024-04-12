@@ -7,10 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
 
-import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
-import java.util.HashSet;
 import java.util.List;
 
 
@@ -32,12 +30,7 @@ public class UserController {
     }
 
     @PatchMapping("/{userId}")
-    public UserDto updateUser(@PathVariable @Min(1) Integer userId, @Valid @RequestBody UserDto userDto)
-            throws ConstraintViolationException {
-        if (userId < 1) {
-            throw new ConstraintViolationException("Invalid userId", new HashSet<>());
-        }
-
+    public UserDto updateUser(@PathVariable @Min(1) Integer userId, @Valid @RequestBody UserDto userDto) {
         User updatedUser = service.update(userId, userDto);
         log.info("Update user {}.", updatedUser);
         return userMapper.toUserDto(updatedUser);
@@ -50,22 +43,14 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    public UserDto getUserById(@PathVariable @Min(1) Integer userId) throws ConstraintViolationException {
-        if (userId < 1) {
-            throw new ConstraintViolationException("Invalid userId", new HashSet<>());
-        }
-
+    public UserDto getUserById(@PathVariable @Min(1) Integer userId) {
         User user = service.getData(userId);
         log.info("Get user with id = {}.", userId);
         return userMapper.toUserDto(user);
     }
 
     @DeleteMapping("/{userId}")
-    public void deleteUserById(@PathVariable @Min(1) Integer userId) throws ConstraintViolationException {
-        if (userId < 1) {
-            throw new ConstraintViolationException("Invalid userId", new HashSet<>());
-        }
-
+    public void deleteUserById(@PathVariable @Min(1) Integer userId) {
         service.delete(userId);
         log.info("User with id = {} was deleted.", userId);
     }

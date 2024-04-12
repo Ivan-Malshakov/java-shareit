@@ -1,6 +1,7 @@
 package ru.practicum.shareit.user.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.exceptions.DataNotFoundException;
@@ -11,6 +12,7 @@ import ru.practicum.shareit.user.storage.db.JpaUserRepository;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -25,6 +27,7 @@ public class UserService {
     @Transactional
     public User update(Integer id, UserDto request) {
         if (!storage.existsById(id)) {
+            log.warn("User with id = {} not found.", id);
             throw new DataNotFoundException(String.format("User with id = %s not found.", id));
         }
 
@@ -45,6 +48,7 @@ public class UserService {
 
     public User getData(Integer id) {
         if (!storage.existsById(id)) {
+            log.warn("User with id = {} not found.", id);
             throw new DataNotFoundException(String.format("User with id = %s not found.", id));
         }
         return storage.findById(id).get();
