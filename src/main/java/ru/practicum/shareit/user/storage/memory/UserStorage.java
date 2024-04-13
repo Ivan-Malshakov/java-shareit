@@ -1,4 +1,4 @@
-package ru.practicum.shareit.user.storage;
+package ru.practicum.shareit.user.storage.memory;
 
 import ru.practicum.shareit.user.User;
 
