@@ -19,21 +19,17 @@ import java.util.List;
 @RequestMapping(path = "/users")
 public class UserController {
     private final UserService service;
-    private final UserMapper userMapper;
 
     @PostMapping
     public UserDto createUser(@Valid @RequestBody UserDto userDto) {
-        User user = userMapper.toUser(userDto);
-        User createdUser = service.create(user);
-        log.info("Create user {}.", createdUser);
-        return userMapper.toUserDto(createdUser);
+        log.info("Create new user");
+        return service.create(userDto);
     }
 
     @PatchMapping("/{userId}")
     public UserDto updateUser(@PathVariable @Min(1) Integer userId, @Valid @RequestBody UserDto userDto) {
-        User updatedUser = service.update(userId, userDto);
-        log.info("Update user {}.", updatedUser);
-        return userMapper.toUserDto(updatedUser);
+        log.info("Update user with id {}.", userId);
+        return service.update(userId, userDto);
     }
 
     @GetMapping
@@ -44,9 +40,8 @@ public class UserController {
 
     @GetMapping("/{userId}")
     public UserDto getUserById(@PathVariable @Min(1) Integer userId) {
-        User user = service.getData(userId);
         log.info("Get user with id = {}.", userId);
-        return userMapper.toUserDto(user);
+        return service.getData(userId);
     }
 
     @DeleteMapping("/{userId}")

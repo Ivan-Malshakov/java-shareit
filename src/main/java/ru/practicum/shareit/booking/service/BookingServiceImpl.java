@@ -14,6 +14,7 @@ import ru.practicum.shareit.exception.exceptions.*;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.user.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
@@ -30,11 +31,12 @@ public class BookingServiceImpl implements BookingService {
     private final UserService userService;
     private final ItemService itemService;
     private final BookingMapper bookingMapper;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional
     public BookingResponseDto saveBooking(BookingResearchDto bookingDto, Integer userId) {
-        User booker = userService.getData(userId);
+        User booker = userMapper.toUser(userService.getData(userId));
         Item item = itemService.getItemToBooking(bookingDto.getItemId());
         Integer itemId = item.getId();
         Integer bookerId = booker.getId();
@@ -64,7 +66,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto approvedOrRejectBooking(Integer userId, Integer bookingId, Boolean approved) {
-        User owner = userService.getData(userId);
+        User owner = userMapper.toUser(userService.getData(userId));
         Integer ownerId = owner.getId();
         Optional<Booking> booking = bookingRepository.findById(bookingId);
         if (booking.isEmpty()) {
@@ -73,9 +75,9 @@ public class BookingServiceImpl implements BookingService {
         }
         if (booking.get().getItem().getOwner().getId().longValue() != ownerId) {
             log.warn("User with id = " + ownerId + " is not the owner of item" +
-                    " с id = " + booking.get().getItem().getId());
+                    " with id = " + booking.get().getItem().getId());
             throw new ForbiddenAccessException("User with id = " + ownerId + " is not the owner of item" +
-                    " с id = " + booking.get().getItem().getId());
+                    " with id = " + booking.get().getItem().getId());
         }
         if (booking.get().getStatus() != BookingStatus.WAITING) {
             log.warn("Not access to status change");
@@ -91,7 +93,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponseDto getBooking(Integer userId, Integer bookingId) {
-        User user = userService.getData(userId);
+        User user = userMapper.toUser(userService.getData(userId));
         Optional<Booking> booking = bookingRepository.findById(bookingId);
         if (booking.isEmpty()) {
             log.warn("Booking with id = " + bookingId + " not found");
@@ -110,7 +112,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingResponseDto> getBookingToUser(Integer userId, String state) {
+    public List<BookingResponseDto> getBookingToUser(Integer userId, String state, Integer from, Integer size) {
         userService.getData(userId);
         List<Booking> bookings = new ArrayList<>();
         switch (state) {
@@ -143,11 +145,14 @@ public class BookingServiceImpl implements BookingService {
                 log.warn("Unknown state: " + state);
                 throw new StateNotFoundException("Unknown state: " + state);
         }
-        return bookingMapper.toListDto(bookings);
+        return bookingMapper.toListDto(bookings).stream()
+                .skip(from)
+                .limit(size)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<BookingResponseDto> getBookingToOwner(Integer userId, String state) {
+    public List<BookingResponseDto> getBookingToOwner(Integer userId, String state, Integer from, Integer size) {
         userService.getData(userId);
         List<Booking> bookings = new ArrayList<>();
         switch (state) {
@@ -180,6 +185,9 @@ public class BookingServiceImpl implements BookingService {
                 log.warn("Unknown state: " + state);
                 throw new StateNotFoundException("Unknown state: " + state);
         }
-        return bookingMapper.toListDto(bookings);
+        return bookingMapper.toListDto(bookings).stream()
+                .skip(from)
+                .limit(size)
+                .collect(Collectors.toList());
     }
 }
