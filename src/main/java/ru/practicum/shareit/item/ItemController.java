@@ -45,7 +45,7 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getUserItems(@RequestHeader(name = "X-Sharer-User-Id") @Min(1) Integer userId) {
+    public List<ItemDto> getItemToUser(@RequestHeader(name = "X-Sharer-User-Id") @Min(1) Integer userId) {
         log.info("Get all items by owner with id = {}.", userId);
         return itemService.getItemToUser(userId);
     }

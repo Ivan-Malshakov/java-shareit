@@ -144,6 +144,67 @@ public class BookingControllerTest {
     }
 
     @Test
+    void saveBookingShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        BookingResearchDto bookingResearchDto = new BookingResearchDto();
+        bookingResearchDto.setItemId(1);
+        bookingResearchDto.setStart(LocalDateTime.now().plusDays(10));
+        bookingResearchDto.setEnd(LocalDateTime.now().plusDays(20));
+        Integer userId = 0;
+
+        when(service.saveBooking(any(BookingResearchDto.class), anyInt()))
+                .thenAnswer(invocationOnMock -> {
+                    BookingResearchDto bookingResearch = invocationOnMock.getArgument(0, BookingResearchDto.class);
+                    BookingResponseDto bookingResponseDto = new BookingResponseDto();
+                    bookingResponseDto.setBooker(new BookerDto(invocationOnMock.getArgument(1, Integer.class)));
+                    bookingResponseDto.setId(1);
+                    bookingResponseDto.setItem(new ItemBookingResponseDto(bookingResearch.getItemId(), "Item 1"));
+                    bookingResponseDto.setStatus(BookingStatus.WAITING);
+                    bookingResponseDto.setStart(bookingResearch.getStart()
+                            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                    bookingResponseDto.setEnd(bookingResearch.getEnd().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                    return bookingResponseDto;
+                });
+
+        mvc.perform(post("/bookings")
+                        .header("X-Sharer-User-Id", userId)
+                        .content(mapper.writeValueAsString(bookingResearchDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void saveBookingShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        BookingResearchDto bookingResearchDto = new BookingResearchDto();
+        bookingResearchDto.setItemId(1);
+        bookingResearchDto.setStart(LocalDateTime.now().plusDays(10));
+        bookingResearchDto.setEnd(LocalDateTime.now().plusDays(20));
+
+        when(service.saveBooking(any(BookingResearchDto.class), anyInt()))
+                .thenAnswer(invocationOnMock -> {
+                    BookingResearchDto bookingResearch = invocationOnMock.getArgument(0, BookingResearchDto.class);
+                    BookingResponseDto bookingResponseDto = new BookingResponseDto();
+                    bookingResponseDto.setBooker(new BookerDto(invocationOnMock.getArgument(1, Integer.class)));
+                    bookingResponseDto.setId(1);
+                    bookingResponseDto.setItem(new ItemBookingResponseDto(bookingResearch.getItemId(), "Item 1"));
+                    bookingResponseDto.setStatus(BookingStatus.WAITING);
+                    bookingResponseDto.setStart(bookingResearch.getStart()
+                            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                    bookingResponseDto.setEnd(bookingResearch.getEnd().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                    return bookingResponseDto;
+                });
+
+        mvc.perform(post("/bookings")
+                        .header("X-Sharer-User-Id", "")
+                        .content(mapper.writeValueAsString(bookingResearchDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
     void saveBookingTestShouldBeOk() throws Exception {
         BookingResearchDto bookingResearchDto = new BookingResearchDto();
         bookingResearchDto.setItemId(1);
@@ -253,6 +314,83 @@ public class BookingControllerTest {
     }
 
     @Test
+    void approvedOrRejectBookingShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        BookingResponseDto bookingResponseDto = new BookingResponseDto();
+        bookingResponseDto.setBooker(new BookerDto(1));
+        bookingResponseDto.setId(1);
+        bookingResponseDto.setItem(new ItemBookingResponseDto(1, "Item 1"));
+        bookingResponseDto.setStart(LocalDateTime.now().plusDays(10)
+                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        bookingResponseDto.setEnd(LocalDateTime.now().plusDays(20).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        Integer userId = 0;
+
+        when(service.approvedOrRejectBooking(anyInt(), anyInt(), any(Boolean.class)))
+                .thenAnswer(invocationOnMock -> {
+                    if (invocationOnMock.getArgument(2, Boolean.class)) {
+                        bookingResponseDto.setStatus(BookingStatus.APPROVED);
+                    } else {
+                        bookingResponseDto.setStatus(BookingStatus.REJECTED);
+                    }
+                    return bookingResponseDto;
+                });
+
+        mvc.perform(patch("/bookings/1?approved=false")
+                        .header("X-Sharer-User-Id", userId)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void approvedOrRejectBookingShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        BookingResponseDto bookingResponseDto = new BookingResponseDto();
+        bookingResponseDto.setBooker(new BookerDto(1));
+        bookingResponseDto.setId(1);
+        bookingResponseDto.setItem(new ItemBookingResponseDto(1, "Item 1"));
+        bookingResponseDto.setStart(LocalDateTime.now().plusDays(10)
+                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        bookingResponseDto.setEnd(LocalDateTime.now().plusDays(20).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+
+        when(service.approvedOrRejectBooking(anyInt(), anyInt(), any(Boolean.class)))
+                .thenAnswer(invocationOnMock -> {
+                    if (invocationOnMock.getArgument(2, Boolean.class)) {
+                        bookingResponseDto.setStatus(BookingStatus.APPROVED);
+                    } else {
+                        bookingResponseDto.setStatus(BookingStatus.REJECTED);
+                    }
+                    return bookingResponseDto;
+                });
+
+        mvc.perform(patch("/bookings/1?approved=false")
+                        .header("X-Sharer-User-Id", "")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    void approvedOrRejectBookingShouldThrowValidationExceptionWithInvalidBookingId() throws Exception {
+        mvc.perform(patch("/bookings/0?approved=false")
+                        .header("X-Sharer-User-Id", 2)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void approvedOrRejectBookingShouldThrowValidationExceptionWithoutBookingId() throws Exception {
+        mvc.perform(patch("/bookings/?approved=false")
+                        .header("X-Sharer-User-Id", 2)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
     void getBookingTestShouldBeOk() throws Exception {
         BookingResponseDto bookingResponseDto = new BookingResponseDto();
         bookingResponseDto.setBooker(new BookerDto(1));
@@ -279,6 +417,48 @@ public class BookingControllerTest {
                 .andExpect(jsonPath("$.item.name", is("Item 1")))
                 .andExpect(jsonPath("$.booker.id", is(1), Integer.class))
                 .andExpect(jsonPath("$.status", is(BookingStatus.APPROVED.toString())));
+    }
+
+    @Test
+    void getBookingShouldThrowValidationExceptionWithInvalidBookingId() throws Exception {
+        BookingResponseDto bookingResponseDto = new BookingResponseDto();
+        bookingResponseDto.setBooker(new BookerDto(1));
+        bookingResponseDto.setId(1);
+        bookingResponseDto.setItem(new ItemBookingResponseDto(1, "Item 1"));
+        bookingResponseDto.setStart(LocalDateTime.now().plusDays(10)
+                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        bookingResponseDto.setEnd(LocalDateTime.now().plusDays(20).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        bookingResponseDto.setStatus(BookingStatus.APPROVED);
+
+        when(service.getBooking(anyInt(), anyInt()))
+                .thenReturn(bookingResponseDto);
+
+        mvc.perform(get("/bookings/0")
+                        .header("X-Sharer-User-Id", 1)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getBookingShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        mvc.perform(get("/bookings/1")
+                        .header("X-Sharer-User-Id", 0)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getBookingShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        mvc.perform(get("/bookings/1")
+                        .header("X-Sharer-User-Id", "")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
     }
 
     @Test
@@ -408,6 +588,27 @@ public class BookingControllerTest {
     }
 
     @Test
+    void getBookingsToBookerShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        mvc.perform(get("/bookings?from=0&size=1")
+                        .header("X-Sharer-User-Id", 0)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getBookingsToBookerShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        mvc.perform(get("/bookings?from=0&size=1")
+                        .header("X-Sharer-User-Id", "")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+
+    @Test
     void getBookingsToOwnerWithNullSizeShouldBeOk() throws Exception {
         BookingResponseDto bookingResponseDto1 = new BookingResponseDto();
         bookingResponseDto1.setBooker(new BookerDto(1));
@@ -531,5 +732,25 @@ public class BookingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getBookingsToOwnerShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        mvc.perform(get("/bookings/owner?from=0&size=1")
+                        .header("X-Sharer-User-Id", 0)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getBookingsToOwnerShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        mvc.perform(get("/bookings/owner?from=0&size=1")
+                        .header("X-Sharer-User-Id", "")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
     }
 }

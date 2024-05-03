@@ -36,7 +36,7 @@ public class ItemRequestControllerTest {
     private MockMvc mvc;
 
     @Test
-    void saveItemRequestShouldThrowValidationException() throws Exception {
+    void saveItemRequestShouldThrowValidationExceptionWithInvalidItemRequestDto() throws Exception {
         ItemRequestDto requestDto = new ItemRequestDto();
 
         when(service.saveItemRequest(anyInt(), any(ItemRequestDto.class)))
@@ -56,6 +56,55 @@ public class ItemRequestControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void saveItemRequestShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        ItemRequestDto requestDto = new ItemRequestDto();
+        requestDto.setDescription("Request 1");
+        Integer userId = 0;
+
+        when(service.saveItemRequest(anyInt(), any(ItemRequestDto.class)))
+                .thenAnswer(invocationOnMock -> {
+                    ItemRequestDto requestDto1 = invocationOnMock.getArgument(1, ItemRequestDto.class);
+                    ItemRequestsResponseDto responseDto = new ItemRequestsResponseDto();
+                    responseDto.setId(1);
+                    responseDto.setCreated(requestDto1.getCreated());
+                    responseDto.setDescription(requestDto1.getDescription());
+                    return responseDto;
+                });
+
+        mvc.perform(post("/requests")
+                        .header("X-Sharer-User-Id", userId)
+                        .content(mapper.writeValueAsString(requestDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void saveItemRequestShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        ItemRequestDto requestDto = new ItemRequestDto();
+        requestDto.setDescription("Request 1");
+
+        when(service.saveItemRequest(anyInt(), any(ItemRequestDto.class)))
+                .thenAnswer(invocationOnMock -> {
+                    ItemRequestDto requestDto1 = invocationOnMock.getArgument(1, ItemRequestDto.class);
+                    ItemRequestsResponseDto responseDto = new ItemRequestsResponseDto();
+                    responseDto.setId(1);
+                    responseDto.setCreated(requestDto1.getCreated());
+                    responseDto.setDescription(requestDto1.getDescription());
+                    return responseDto;
+                });
+
+        mvc.perform(post("/requests")
+                        .header("X-Sharer-User-Id", "")
+                        .content(mapper.writeValueAsString(requestDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
     }
 
     @Test
@@ -116,7 +165,42 @@ public class ItemRequestControllerTest {
     }
 
     @Test
-    void getRequestsToOtherUsersTestSizeNull() throws Exception {
+    void getRequestsToUserShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        ItemRequestsResponseDto responseDto1 = new ItemRequestsResponseDto(1, "Desc 1",
+                LocalDateTime.now(), new ArrayList<>());
+        ItemRequestsResponseDto responseDto2 = new ItemRequestsResponseDto(2, "Desc 2",
+                LocalDateTime.now(), new ArrayList<>());
+        Integer userId = 0;
+
+        when(service.getRequestsToUser(anyInt())).thenReturn(List.of(responseDto1, responseDto2));
+
+        mvc.perform(get("/requests")
+                        .header("X-Sharer-User-Id", userId)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getRequestsToUserShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        ItemRequestsResponseDto responseDto1 = new ItemRequestsResponseDto(1, "Desc 1",
+                LocalDateTime.now(), new ArrayList<>());
+        ItemRequestsResponseDto responseDto2 = new ItemRequestsResponseDto(2, "Desc 2",
+                LocalDateTime.now(), new ArrayList<>());
+
+        when(service.getRequestsToUser(anyInt())).thenReturn(List.of(responseDto1, responseDto2));
+
+        mvc.perform(get("/requests")
+                        .header("X-Sharer-User-Id", "")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    void getRequestsToOtherUsersShouldBeOkWithSizeNull() throws Exception {
         ItemRequestsResponseDto responseDto1 = new ItemRequestsResponseDto(1, "Desc 1",
                 LocalDateTime.now(), new ArrayList<>());
         ItemRequestsResponseDto responseDto2 = new ItemRequestsResponseDto(2, "Desc 2",
@@ -156,7 +240,7 @@ public class ItemRequestControllerTest {
     }
 
     @Test
-    void getRequestsToOtherUsersShouldThrowValidationException() throws Exception {
+    void getRequestsToOtherUsersShouldThrowValidationExceptionWithInvalidSize() throws Exception {
         ItemRequestsResponseDto responseDto1 = new ItemRequestsResponseDto(1, "Desc 1",
                 LocalDateTime.now(), new ArrayList<>());
         ItemRequestsResponseDto responseDto2 = new ItemRequestsResponseDto(2, "Desc 2",
@@ -195,6 +279,49 @@ public class ItemRequestControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getRequestsToOtherUsersShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        ItemRequestsResponseDto responseDto1 = new ItemRequestsResponseDto(1, "Desc 1",
+                LocalDateTime.now(), new ArrayList<>());
+        ItemRequestsResponseDto responseDto2 = new ItemRequestsResponseDto(2, "Desc 2",
+                LocalDateTime.now(), new ArrayList<>());
+        ItemToRequestResponse item = new ItemToRequestResponse(1, "Item 1", "Desc 1",
+                true, 2);
+        responseDto2.setItems(List.of(item));
+        Integer userId = 0;
+
+        when(service.getRequestsToOtherUsers(anyInt(), anyInt(), anyInt()))
+                .thenReturn(List.of(responseDto1, responseDto2));
+
+        mvc.perform(get("/requests/all?from=1&size=1")
+                        .header("X-Sharer-User-Id", userId)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getRequestsToOtherUsersShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        ItemRequestsResponseDto responseDto1 = new ItemRequestsResponseDto(1, "Desc 1",
+                LocalDateTime.now(), new ArrayList<>());
+        ItemRequestsResponseDto responseDto2 = new ItemRequestsResponseDto(2, "Desc 2",
+                LocalDateTime.now(), new ArrayList<>());
+        ItemToRequestResponse item = new ItemToRequestResponse(1, "Item 1", "Desc 1",
+                true, 2);
+        responseDto2.setItems(List.of(item));
+
+        when(service.getRequestsToOtherUsers(anyInt(), anyInt(), anyInt()))
+                .thenReturn(List.of(responseDto1, responseDto2));
+
+        mvc.perform(get("/requests/all?from=1&size=1")
+                        .header("X-Sharer-User-Id", "")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
     }
 
     @Test
@@ -250,5 +377,51 @@ public class ItemRequestControllerTest {
                 .andExpect(jsonPath("$.created", is(responseDto.getCreated()
                         .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))))
                 .andExpect(jsonPath("$.items", is(responseDto.getItems())));
+    }
+
+    @Test
+    void getRequestByIdShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        ItemRequestsResponseDto responseDto = new ItemRequestsResponseDto(1, "Desc 1",
+                LocalDateTime.now(), new ArrayList<>());
+        Integer userId = 0;
+
+        when(service.getRequest(anyInt(), anyInt())).thenReturn(responseDto);
+
+        mvc.perform(get("/requests/1")
+                        .header("X-Sharer-User-Id", userId)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getRequestByIdShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        ItemRequestsResponseDto responseDto = new ItemRequestsResponseDto(1, "Desc 1",
+                LocalDateTime.now(), new ArrayList<>());
+
+        when(service.getRequest(anyInt(), anyInt())).thenReturn(responseDto);
+
+        mvc.perform(get("/requests/1")
+                        .header("X-Sharer-User-Id", "")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    void getRequestByIdShouldThrowValidationExceptionWithInvalidRequestId() throws Exception {
+        ItemRequestsResponseDto responseDto = new ItemRequestsResponseDto(1, "Desc 1",
+                LocalDateTime.now(), new ArrayList<>());
+
+        when(service.getRequest(anyInt(), anyInt())).thenReturn(responseDto);
+
+        mvc.perform(get("/requests/0")
+                        .header("X-Sharer-User-Id", 1)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 }

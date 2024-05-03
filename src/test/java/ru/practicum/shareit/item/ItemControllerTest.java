@@ -127,6 +127,49 @@ public class ItemControllerTest {
     }
 
     @Test
+    void saveItemShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        ItemDto itemDto = new ItemDto(null, "Item 1", "Desc 1", true,
+                null, null, new ArrayList<>(), 3);
+        Integer userId = 0;
+
+        when(service.saveItem(any(ItemDto.class), anyInt()))
+                .thenAnswer(invocationOnMock -> {
+                    ItemDto itemResponse = invocationOnMock.getArgument(0, ItemDto.class);
+                    itemResponse.setId(1);
+                    return itemResponse;
+                });
+
+        mvc.perform(post("/items")
+                        .header("X-Sharer-User-Id", userId)
+                        .content(mapper.writeValueAsString(itemDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void saveItemShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        ItemDto itemDto = new ItemDto(null, "Item 1", "Desc 1", true,
+                null, null, new ArrayList<>(), 3);
+
+        when(service.saveItem(any(ItemDto.class), anyInt()))
+                .thenAnswer(invocationOnMock -> {
+                    ItemDto itemResponse = invocationOnMock.getArgument(0, ItemDto.class);
+                    itemResponse.setId(1);
+                    return itemResponse;
+                });
+
+        mvc.perform(post("/items")
+                        .header("X-Sharer-User-Id", "")
+                        .content(mapper.writeValueAsString(itemDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
     void getItemShouldBeOk() throws Exception {
         when(service.getItem(anyInt(), anyInt()))
                 .thenAnswer(invocationOnMock -> {
@@ -148,6 +191,61 @@ public class ItemControllerTest {
                 .andExpect(jsonPath("$.available", is(true)))
                 .andExpect(jsonPath("$.comments", is(new ArrayList())))
                 .andExpect(jsonPath("$.requestId", is(1), Integer.class));
+    }
+
+    @Test
+    void getItemShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        when(service.getItem(anyInt(), anyInt()))
+                .thenAnswer(invocationOnMock -> {
+                    ItemDto itemDto = new ItemDto(null, "Item 1", "Desc 1", true,
+                            null, null, new ArrayList<>(), 1);
+                    itemDto.setId(invocationOnMock.getArgument(1, Integer.class));
+                    return itemDto;
+                });
+        Integer userId = 0;
+
+        mvc.perform(get("/items/1")
+                        .header("X-Sharer-User-Id", userId)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getItemShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        when(service.getItem(anyInt(), anyInt()))
+                .thenAnswer(invocationOnMock -> {
+                    ItemDto itemDto = new ItemDto(null, "Item 1", "Desc 1", true,
+                            null, null, new ArrayList<>(), 1);
+                    itemDto.setId(invocationOnMock.getArgument(1, Integer.class));
+                    return itemDto;
+                });
+
+        mvc.perform(get("/items/1")
+                        .header("X-Sharer-User-Id", "")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    void getItemShouldThrowValidationExceptionWithInvalidItemId() throws Exception {
+        when(service.getItem(anyInt(), anyInt()))
+                .thenAnswer(invocationOnMock -> {
+                    ItemDto itemDto = new ItemDto(null, "Item 1", "Desc 1", true,
+                            null, null, new ArrayList<>(), 1);
+                    itemDto.setId(invocationOnMock.getArgument(1, Integer.class));
+                    return itemDto;
+                });
+
+        mvc.perform(get("/items/0")
+                        .header("X-Sharer-User-Id", 1)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -197,6 +295,49 @@ public class ItemControllerTest {
     }
 
     @Test
+    void getItemToUserShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        List<ItemDto> items = new ArrayList<>();
+        items.add(new ItemDto(1, "Item 1", "Desc 1", true,
+                null, null, new ArrayList<>(), 1));
+        items.add(new ItemDto(2, "Item 2", "Desc 2", true,
+                null, null, new ArrayList<>(), 1));
+        items.add(new ItemDto(3, "Item 3", "Desc 3", true,
+                null, null, new ArrayList<>(), 1));
+        Integer userId = 0;
+
+        when(service.getItemToUser(anyInt()))
+                .thenReturn(items);
+
+        mvc.perform(get("/items")
+                        .header("X-Sharer-User-Id", userId)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getItemToUserShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        List<ItemDto> items = new ArrayList<>();
+        items.add(new ItemDto(1, "Item 1", "Desc 1", true,
+                null, null, new ArrayList<>(), 1));
+        items.add(new ItemDto(2, "Item 2", "Desc 2", true,
+                null, null, new ArrayList<>(), 1));
+        items.add(new ItemDto(3, "Item 3", "Desc 3", true,
+                null, null, new ArrayList<>(), 1));
+
+        when(service.getItemToUser(anyInt()))
+                .thenReturn(items);
+
+        mvc.perform(get("/items")
+                        .header("X-Sharer-User-Id", "")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
     void updateItemShouldBeOk() throws Exception {
         ItemDto itemDto = new ItemDto(null, "New item 1", null,
                 null, null, null, null, null);
@@ -229,7 +370,104 @@ public class ItemControllerTest {
     }
 
     @Test
-    void getItemToSearchShouldBeOk() throws Exception {
+    void updateItemShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        ItemDto itemDto = new ItemDto(null, "New item 1", null,
+                null, null, null, null, null);
+        Integer userId = 0;
+
+        when(service.updateItem(any(ItemDto.class), anyInt(), anyInt()))
+                .thenAnswer(invocationOnMock -> {
+                    ItemDto itemResponse = invocationOnMock.getArgument(0, ItemDto.class);
+                    itemResponse.setId(invocationOnMock.getArgument(2, Integer.class));
+                    itemResponse.setDescription("Desc 1");
+                    itemResponse.setAvailable(true);
+                    itemResponse.setComments(new ArrayList<>());
+                    return itemResponse;
+                });
+
+        mvc.perform(patch("/items/1")
+                        .header("X-Sharer-User-Id", userId)
+                        .content(mapper.writeValueAsString(itemDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateItemShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        ItemDto itemDto = new ItemDto(null, "New item 1", null,
+                null, null, null, null, null);
+
+        when(service.updateItem(any(ItemDto.class), anyInt(), anyInt()))
+                .thenAnswer(invocationOnMock -> {
+                    ItemDto itemResponse = invocationOnMock.getArgument(0, ItemDto.class);
+                    itemResponse.setId(invocationOnMock.getArgument(2, Integer.class));
+                    itemResponse.setDescription("Desc 1");
+                    itemResponse.setAvailable(true);
+                    itemResponse.setComments(new ArrayList<>());
+                    return itemResponse;
+                });
+
+        mvc.perform(patch("/items/1")
+                        .header("X-Sharer-User-Id", "")
+                        .content(mapper.writeValueAsString(itemDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    void updateItemShouldThrowValidationExceptionWithInvalidItemId() throws Exception {
+        ItemDto itemDto = new ItemDto(null, "New item 1", null,
+                null, null, null, null, null);
+
+        when(service.updateItem(any(ItemDto.class), anyInt(), anyInt()))
+                .thenAnswer(invocationOnMock -> {
+                    ItemDto itemResponse = invocationOnMock.getArgument(0, ItemDto.class);
+                    itemResponse.setId(invocationOnMock.getArgument(2, Integer.class));
+                    itemResponse.setDescription("Desc 1");
+                    itemResponse.setAvailable(true);
+                    itemResponse.setComments(new ArrayList<>());
+                    return itemResponse;
+                });
+
+        mvc.perform(patch("/items/0")
+                        .header("X-Sharer-User-Id", 1)
+                        .content(mapper.writeValueAsString(itemDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateItemShouldThrowValidationExceptionWithoutItemId() throws Exception {
+        ItemDto itemDto = new ItemDto(null, "New item 1", null,
+                null, null, null, null, null);
+
+        when(service.updateItem(any(ItemDto.class), anyInt(), anyInt()))
+                .thenAnswer(invocationOnMock -> {
+                    ItemDto itemResponse = invocationOnMock.getArgument(0, ItemDto.class);
+                    itemResponse.setId(invocationOnMock.getArgument(2, Integer.class));
+                    itemResponse.setDescription("Desc 1");
+                    itemResponse.setAvailable(true);
+                    itemResponse.setComments(new ArrayList<>());
+                    return itemResponse;
+                });
+
+        mvc.perform(patch("/items/")
+                        .header("X-Sharer-User-Id", 1)
+                        .content(mapper.writeValueAsString(itemDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    void searchShouldBeOk() throws Exception {
         ItemDto itemDto1 = new ItemDto(1, "Item 1", "Desc 1",
                 false, null, null, new ArrayList<>(), null);
         ItemDto itemDto2 = new ItemDto(2, "Item 2", "Desc 2",
@@ -261,16 +499,63 @@ public class ItemControllerTest {
     }
 
     @Test
+    void searchShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        ItemDto itemDto1 = new ItemDto(1, "Item 1", "Desc 1",
+                false, null, null, new ArrayList<>(), null);
+        ItemDto itemDto2 = new ItemDto(2, "Item 2", "Desc 2",
+                true, null, null, new ArrayList<>(), null);
+        Integer userId = 0;
+
+        when(service.searchItem(anyString(), anyInt()))
+                .thenReturn(List.of(itemDto1, itemDto2));
+
+        mvc.perform(get("/items/search?text=пре")
+                        .accept(MediaType.ALL)
+                        .header("X-Sharer-User-Id", userId))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void searchShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        ItemDto itemDto1 = new ItemDto(1, "Item 1", "Desc 1",
+                false, null, null, new ArrayList<>(), null);
+        ItemDto itemDto2 = new ItemDto(2, "Item 2", "Desc 2",
+                true, null, null, new ArrayList<>(), null);
+
+        when(service.searchItem(anyString(), anyInt()))
+                .thenReturn(List.of(itemDto1, itemDto2));
+
+        mvc.perform(get("/items/search?text=пре")
+                        .accept(MediaType.ALL)
+                        .header("X-Sharer-User-Id", ""))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    void searchShouldThrowValidationExceptionWithInvalidText() throws Exception {
+        ItemDto itemDto1 = new ItemDto(1, "Item 1", "Desc 1",
+                false, null, null, new ArrayList<>(), null);
+        ItemDto itemDto2 = new ItemDto(2, "Item 2", "Desc 2",
+                true, null, null, new ArrayList<>(), null);
+
+        when(service.searchItem(anyString(), anyInt()))
+                .thenReturn(List.of(itemDto1, itemDto2));
+
+        mvc.perform(get("/items/search?text=over100symbolsssssssssssssssssssssssssssssssssssssssssssssssss" +
+                        "ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss")
+                        .accept(MediaType.ALL)
+                        .header("X-Sharer-User-Id", 1))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void saveCommentShouldThrowValidationExceptionWithInvalidText() throws Exception {
         CommentResearchDto commentResearchDto = new CommentResearchDto();
         commentResearchDto.setText("");
 
         when(service.saveComment(anyInt(), anyInt(), any(CommentResearchDto.class)))
-                .thenAnswer(invocationOnMock -> {
-                    CommentResponseDto commentResponseDto = invocationOnMock.getArgument(2,
-                            CommentResponseDto.class);
-                    return commentResponseDto;
-                });
+                .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(2,
+                        CommentResponseDto.class));
 
         mvc.perform(post("/items/1/comment")
                         .header("X-Sharer-User-Id", 1)
@@ -279,6 +564,78 @@ public class ItemControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void saveCommentShouldThrowValidationExceptionWithInvalidUserIdInHeader() throws Exception {
+        CommentResearchDto commentResearchDto = new CommentResearchDto();
+        commentResearchDto.setText("Comment 1");
+        Integer userId = 0;
+
+        when(service.saveComment(anyInt(), anyInt(), any(CommentResearchDto.class)))
+                .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(2,
+                        CommentResponseDto.class));
+
+        mvc.perform(post("/items/1/comment")
+                        .header("X-Sharer-User-Id", userId)
+                        .content(mapper.writeValueAsString(commentResearchDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void saveCommentShouldThrowValidationExceptionWithoutUserIdInHeader() throws Exception {
+        CommentResearchDto commentResearchDto = new CommentResearchDto();
+        commentResearchDto.setText("Comment 1");
+        when(service.saveComment(anyInt(), anyInt(), any(CommentResearchDto.class)))
+                .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(2,
+                        CommentResponseDto.class));
+
+        mvc.perform(post("/items/1/comment")
+                        .header("X-Sharer-User-Id", "")
+                        .content(mapper.writeValueAsString(commentResearchDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    void saveCommentShouldThrowValidationExceptionWithInvalidItemId() throws Exception {
+        CommentResearchDto commentResearchDto = new CommentResearchDto();
+        commentResearchDto.setText("Comment 1");
+
+        when(service.saveComment(anyInt(), anyInt(), any(CommentResearchDto.class)))
+                .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(2,
+                        CommentResponseDto.class));
+
+        mvc.perform(post("/items/0/comment")
+                        .header("X-Sharer-User-Id", 1)
+                        .content(mapper.writeValueAsString(commentResearchDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void saveCommentShouldThrowValidationExceptionWithoutItemId() throws Exception {
+        CommentResearchDto commentResearchDto = new CommentResearchDto();
+        commentResearchDto.setText("Comment 1");
+
+        when(service.saveComment(anyInt(), anyInt(), any(CommentResearchDto.class)))
+                .thenAnswer(invocationOnMock -> invocationOnMock.getArgument(2,
+                        CommentResponseDto.class));
+
+        mvc.perform(post("/items/comment")
+                        .header("X-Sharer-User-Id", 1)
+                        .content(mapper.writeValueAsString(commentResearchDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
     }
 
     @Test

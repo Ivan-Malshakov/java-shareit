@@ -19,7 +19,6 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,7 +39,7 @@ public class UserControllerTest {
     private MockMvc mvc;
 
     @Test
-    void getAllUsersShouldBeOk() throws Exception {
+    void getAllUsersShouldBeOkWithThreeUsers() throws Exception {
         when(service.getAll())
                 .thenAnswer(invocationOnMock -> {
                     List<User> usersResponse = new ArrayList<>();
@@ -59,6 +58,19 @@ public class UserControllerTest {
     }
 
     @Test
+    void getAllUsersShouldBeOkWithoutUsers() throws Exception {
+        when(service.getAll())
+                .thenAnswer(invocationOnMock -> (List<User>) new ArrayList<User>());
+
+        mvc.perform(get("/users")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()", is(0)));
+    }
+
+    @Test
     void getUserByIdShouldBeOk() throws Exception {
 
         UserDto userResponse = new UserDto(1, "User 1", "user1@yandex.ru");
@@ -70,10 +82,18 @@ public class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andDo(print())
                 .andExpect(jsonPath("$.id", is(1), Integer.class))
                 .andExpect(jsonPath("$.name", is("User 1")))
                 .andExpect(jsonPath("$.email", is("user1@yandex.ru")));
+    }
+
+    @Test
+    void getUserByIdShouldThrowValidationExceptionWithInvalidUserId() throws Exception {
+        mvc.perform(get("/users/0")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -133,11 +153,57 @@ public class UserControllerTest {
     }
 
     @Test
+    void updateUserShouldThrowValidationExceptionWithInvalidUserId() throws Exception {
+        UserDto userResearch = new UserDto(1, "New user 1", "user1@yandex.ru");
+
+        when(service.update(anyInt(), any(UserDto.class))).thenReturn(userResearch);
+
+        mvc.perform(patch("/users/0")
+                        .content(mapper.writeValueAsString(userResearch))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateUserShouldThrowValidationExceptionWithoutUserId() throws Exception {
+        UserDto userResearch = new UserDto(1, "New user 1", "user1@yandex.ru");
+
+        when(service.update(anyInt(), any(UserDto.class))).thenReturn(userResearch);
+
+        mvc.perform(patch("/users/")
+                        .content(mapper.writeValueAsString(userResearch))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
     void deleteUserByIdShouldBeOk() throws Exception {
         mvc.perform(delete("/users/1")
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void deleteUserByIdShouldThrowValidationExceptionWithInvalidUserId() throws Exception {
+        mvc.perform(delete("/users/0")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void deleteUserByIdShouldThrowValidationExceptionWithoutUserId() throws Exception {
+        mvc.perform(delete("/users/")
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
     }
 }
