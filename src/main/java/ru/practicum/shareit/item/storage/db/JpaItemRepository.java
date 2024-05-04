@@ -11,7 +11,11 @@ public interface JpaItemRepository extends JpaRepository<Item, Integer> {
 
     @Query("select it from Item as it where (upper(it.name) like CONCAT('%',UPPER(:name),'%') " +
             "or upper(it.description) like CONCAT('%',UPPER(:description),'%')) AND it.available = true")
-    List<Item> findByName(@Param("name") String name, @Param("description") String description);
+    List<Item> findByNameAndDescription(@Param("name") String name, @Param("description") String description);
 
     List<Item> findByOwnerIdOrderByIdAsc(Integer id);
+
+    List<Item> findByRequest_Id(Integer id);
+
+    List<Item> findByRequest_IdIn(List<Integer> ids);
 }

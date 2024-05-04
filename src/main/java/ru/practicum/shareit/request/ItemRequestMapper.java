@@ -2,11 +2,15 @@ package ru.practicum.shareit.request;
 
 import org.mapstruct.Mapper;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
-import ru.practicum.shareit.user.UserMapper;
+import ru.practicum.shareit.request.dto.ItemRequestsResponseDto;
 
-@Mapper(componentModel = "spring", uses = {UserMapper.class})
+import java.util.List;
+
+@Mapper(componentModel = "spring", uses = ItemRequestMapper.class)
 public interface ItemRequestMapper {
-    ItemRequestDto toItemRequestDto(ItemRequest itemRequest);
+    ItemRequest toRequest(ItemRequestDto itemRequestDto);
 
-    ItemRequest toItemRequest(ItemRequestDto itemRequestDto);
+    ItemRequestsResponseDto toDto(ItemRequest itemRequest);
+
+    List<ItemRequestsResponseDto> toDtoList(List<ItemRequest> itemRequests);
 }

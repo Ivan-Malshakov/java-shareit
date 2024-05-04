@@ -26,12 +26,6 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleConflictEmailException(final ConflictEmailException e) {
-        return new ErrorResponse("Email error", e.getMessage(), 409);
-    }
-
-    @ExceptionHandler
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleForbiddenUpdateException(final ForbiddenUpdateException e) {
         return new ErrorResponse("Update error", e.getMessage(), 403);
@@ -65,12 +59,6 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleUnavailableItemException(final UnavailableItemException e) {
         return new ErrorResponse("Available error", e.getMessage(), 400);
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleValidationException(final ValidationException e) {
-        return new ErrorResponse("Validation error", e.getMessage(), 400);
     }
 
     @ExceptionHandler

@@ -20,15 +20,16 @@ public class UserService {
     private final UserMapper userMapper;
 
     @Transactional
-    public User create(User data) {
-        return storage.save(data);
+    public UserDto create(UserDto data) {
+        User user = userMapper.toUser(data);
+        return userMapper.toUserDto(storage.save(user));
     }
 
     @Transactional
-    public User update(Integer id, UserDto request) {
+    public UserDto update(Integer id, UserDto request) {
         if (!storage.existsById(id)) {
-            log.warn("User with id = {} not found.", id);
-            throw new DataNotFoundException(String.format("User with id = %s not found.", id));
+            log.warn("User with id = {} not found", id);
+            throw new DataNotFoundException(String.format("User with id = %s not found", id));
         }
 
         User user = userMapper.toUser(request);
@@ -39,23 +40,28 @@ public class UserService {
         if (user.getName() == null) {
             user.setName(storage.findById(id).get().getName());
         }
-        return storage.save(user);
+        User updatedUser = storage.save(user);
+        return userMapper.toUserDto(updatedUser);
     }
 
     public List<User> getAll() {
         return storage.findAll();
     }
 
-    public User getData(Integer id) {
+    public UserDto getData(Integer id) {
         if (!storage.existsById(id)) {
             log.warn("User with id = {} not found.", id);
-            throw new DataNotFoundException(String.format("User with id = %s not found.", id));
+            throw new DataNotFoundException(String.format("User with id = %s not found", id));
         }
-        return storage.findById(id).get();
+        return userMapper.toUserDto(storage.findById(id).get());
     }
 
     @Transactional
     public void delete(Integer id) {
+        if (!storage.existsById(id)) {
+            log.warn("User with id = {} not found", id);
+            throw new DataNotFoundException(String.format("User with id = %s not found", id));
+        }
         storage.deleteById(id);
     }
 }

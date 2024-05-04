@@ -20,7 +20,9 @@ import ru.practicum.shareit.item.dto.CommentResponseDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.storage.db.JpaCommentRepository;
 import ru.practicum.shareit.item.storage.db.JpaItemRepository;
+import ru.practicum.shareit.request.storage.JpaItemRequestRepository;
 import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.user.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.util.ArrayList;
@@ -36,9 +38,11 @@ public class ItemServiceImpl implements ItemService {
     private final JpaItemRepository jpaItemRepository;
     private final JpaCommentRepository jpaCommentRepository;
     private final JpaBookingRepository jpaBookingRepository;
+    private final JpaItemRequestRepository jpaItemRequestRepository;
     private final ItemMapper itemMapper;
     private final BookingMapper bookingMapper;
     private final CommentMapper commentMapper;
+    private final UserMapper userMapper;
     private final UserService userService;
 
     @Override
@@ -46,14 +50,25 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto saveItem(ItemDto request, Integer userId) {
         userService.getData(userId);
         Item item = itemMapper.toItem(request);
-        item.setOwner(userService.getData(userId));
+        item.setOwner(userMapper.toUser(userService.getData(userId)));
+        if (request.getRequestId() != null) {
+            if (jpaItemRequestRepository.findById(request.getRequestId()).isEmpty()) {
+                throw new DataNotFoundException("Request with id = " + request.getRequestId() + " not found");
+            }
+            item.setRequest(jpaItemRequestRepository.findById(request.getRequestId()).get());
+        }
         return itemMapper.toDto(jpaItemRepository.save(item));
     }
 
     @Override
     @Transactional
     public ItemDto updateItem(ItemDto request, Integer userId, Integer itemId) {
-        Item item = jpaItemRepository.findById(itemId).get();
+        Optional<Item> itemOptional = jpaItemRepository.findById(itemId);
+        if (itemOptional.isEmpty()) {
+            throw new DataNotFoundException("Item with id = " + itemId + " not found");
+        }
+        Item item = itemOptional.get();
+
         if (!Objects.equals(item.getOwner().getId(), userId)) {
             log.warn("User with id = " + userId + " does not have rights to change item " +
                     "because he is not its owner");
@@ -77,7 +92,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto getItem(Integer id, Integer userId) {
-        User user = userService.getData(userId);
+        User user = userMapper.toUser(userService.getData(userId));
         Optional<Item> item = jpaItemRepository.findById(id);
         if (item.isEmpty()) {
             log.warn("Item with id = " + id + " not found");
@@ -138,7 +153,7 @@ public class ItemServiceImpl implements ItemService {
         userService.getData(userId);
         List<ItemDto> items = new ArrayList<>();
         if (!search.isBlank()) {
-            items = itemMapper.toDtoList(jpaItemRepository.findByName(search, search));
+            items = itemMapper.toDtoList(jpaItemRepository.findByNameAndDescription(search, search));
         }
         return items;
     }
@@ -146,18 +161,18 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public CommentResponseDto saveComment(Integer itemId, Integer userId, CommentResearchDto research) {
-        User user = userService.getData(userId);
+        User user = userMapper.toUser(userService.getData(userId));
         Optional<Item> item = jpaItemRepository.findById(itemId);
         if (item.isEmpty()) {
-            log.warn("Item with = " + itemId + " not found");
-            throw new DataNotFoundException("Item with = " + itemId + " not found");
+            log.warn("Item with id = " + itemId + " not found");
+            throw new DataNotFoundException("Item with id = " + itemId + " not found");
         }
         if (jpaBookingRepository.findBookingByItem_IdAndBooker_IdAndEndBeforeAndStatus(itemId, userId,
                 research.getCreated(), BookingStatus.APPROVED).isEmpty()) {
             log.warn("Completed bookings for a user with id = " +
-                    userId + " for item with id = " + itemId + "not found");
+                    userId + " for item with id = " + itemId + " not found");
             throw new BookingNotFoundException("Completed bookings for a user with id = " +
-                    userId + " for item with id = " + itemId + "not found");
+                    userId + " for item with id = " + itemId + " not found");
         }
         Comment comment = commentMapper.toComment(research);
         comment.setAuthor(user);
@@ -169,8 +184,8 @@ public class ItemServiceImpl implements ItemService {
     public Item getItemToBooking(Integer id) {
         Optional<Item> item = jpaItemRepository.findById(id);
         if (item.isEmpty()) {
-            log.warn("Item with = " + id + " not found");
-            throw new DataNotFoundException("Item with = " + id + " not found");
+            log.warn("Item with id = " + id + " not found");
+            throw new DataNotFoundException("Item with id = " + id + " not found");
         }
         return item.get();
     }

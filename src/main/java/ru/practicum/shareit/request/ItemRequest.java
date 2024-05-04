@@ -1,31 +1,34 @@
 package ru.practicum.shareit.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import ru.practicum.shareit.user.User;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Data
 @EqualsAndHashCode(of = {"id"})
 @SuperBuilder
 @NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "items_request")
 public class ItemRequest {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "request_id")
     private Integer id;
 
-    @NotBlank
-    @Size(max = 250)
     private String description;
 
-    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "owner_id")
     private User requestor;
 
-    @NotNull
     private LocalDateTime created;
-
 }
