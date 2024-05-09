@@ -12,8 +12,13 @@
     <groupId>ru.practicum</groupId>
     <artifactId>shareit</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
     <name>ShareIt</name>
+    <modules>
+        <module>shareit-gateway</module>
+        <module>shareit-server</module>
+    </modules>
 
     <properties>
         <java.version>11</java.version>
@@ -184,6 +189,10 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
