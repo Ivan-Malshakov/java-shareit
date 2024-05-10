@@ -16,11 +16,5 @@ public class ErrorHandler {
         return new ErrorResponse("Validation error", e.getMessage(), 400);
     }
 
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleRuntimeException(final Exception e) {
-        return new ErrorResponse("Error", e.getMessage(), 500);
-    }
-
 }
 

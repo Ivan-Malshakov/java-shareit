@@ -27,7 +27,7 @@ public class BookingController {
         return bookingService.saveBooking(bookingDto, userId);
     }
 
-    @PatchMapping(value = "/{bookingId}")
+    @PatchMapping("/{bookingId}")
     public BookingResponseDto approvedOrRejectBooking(@RequestHeader("X-Sharer-User-Id") @Min(1) Integer userId,
                                                       @PathVariable @Min(1) Integer bookingId,
                                                       @RequestParam boolean approved) {
@@ -35,7 +35,7 @@ public class BookingController {
         return bookingService.approvedOrRejectBooking(userId, bookingId, approved);
     }
 
-    @GetMapping(value = "/{bookingId}")
+    @GetMapping("/{bookingId}")
     public BookingResponseDto getBooking(@RequestHeader("X-Sharer-User-Id") @Min(1) Integer userId,
                                          @PathVariable @Min(1) Integer bookingId) {
         log.info("Get bookings with id = {}", bookingId);
@@ -55,7 +55,7 @@ public class BookingController {
         }
     }
 
-    @GetMapping(value = "/owner")
+    @GetMapping("/owner")
     public List<BookingResponseDto> getBookingsToOwner(@RequestHeader("X-Sharer-User-Id") @Min(1) Integer userId,
                                                        @RequestParam(defaultValue = "ALL") String state,
                                                        @RequestParam(defaultValue = "0") @Min(0) Integer from,
