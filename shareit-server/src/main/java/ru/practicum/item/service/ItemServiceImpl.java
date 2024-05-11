@@ -53,6 +53,7 @@ public class ItemServiceImpl implements ItemService {
         item.setOwner(userMapper.toUser(userService.getData(userId)));
         if (request.getRequestId() != null) {
             if (jpaItemRequestRepository.findById(request.getRequestId()).isEmpty()) {
+                log.warn("Request with id = " + request.getRequestId() + " not found");
                 throw new DataNotFoundException("Request with id = " + request.getRequestId() + " not found");
             }
             item.setRequest(jpaItemRequestRepository.findById(request.getRequestId()).get());
@@ -65,6 +66,7 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto updateItem(ItemDto request, Integer userId, Integer itemId) {
         Optional<Item> itemOptional = jpaItemRepository.findById(itemId);
         if (itemOptional.isEmpty()) {
+            log.warn("Item with id = " + itemId + " not found");
             throw new DataNotFoundException("Item with id = " + itemId + " not found");
         }
         Item item = itemOptional.get();

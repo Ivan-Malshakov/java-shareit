@@ -9,6 +9,7 @@ import ru.practicum.request.dto.ItemRequestDto;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 @Slf4j
 @RestController
@@ -20,14 +21,14 @@ public class ItemRequestController {
 
     @PostMapping
     public ResponseEntity<Object> saveItemRequest(@RequestHeader("X-Sharer-User-Id") @Min(1) Integer userId,
-                                                  @RequestBody @Valid ItemRequestDto requestDto) {
-        log.info("Save item request {}", requestDto);
+                                                  @RequestBody @NotNull @Valid ItemRequestDto requestDto) {
+        log.debug("Save item request {}", requestDto);
         return itemRequestClient.saveItemRequest(userId, requestDto);
     }
 
     @GetMapping
     public ResponseEntity<Object> getRequestsToUser(@RequestHeader("X-Sharer-User-Id") @Min(1) Integer userId) {
-        log.info("Get all user requests with id = {}", userId);
+        log.debug("Get all user requests with id = {}", userId);
         return itemRequestClient.getRequestsToUser(userId);
     }
 
@@ -39,14 +40,14 @@ public class ItemRequestController {
         if (size == null) {
             size = Integer.MAX_VALUE;
         }
-        log.info("Get all requests from other users by user with id = {}", userId);
+        log.debug("Get all requests from other users by user with id = {}", userId);
         return itemRequestClient.getRequestsToAnotherUsers(userId, from, size);
     }
 
     @GetMapping("/{requestId}")
     public ResponseEntity<Object> getRequestById(@RequestHeader("X-Sharer-User-Id") @Min(1) Integer userId,
                                                  @PathVariable @Min(1) Integer requestId) {
-        log.info("Get request by user with id = {}", userId);
+        log.debug("Get request by user with id = {}", userId);
         return itemRequestClient.getRequest(userId, requestId);
     }
 }

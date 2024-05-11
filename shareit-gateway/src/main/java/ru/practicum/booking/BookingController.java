@@ -9,6 +9,7 @@ import ru.practicum.booking.dto.BookingResearchDto;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 @Slf4j
 @RestController
@@ -20,8 +21,8 @@ public class BookingController {
 
     @PostMapping
     public ResponseEntity<Object> saveBooking(@RequestHeader("X-Sharer-User-Id") @Min(1) Integer userId,
-                                              @RequestBody @Valid BookingResearchDto bookingDto) {
-        log.info("Save new booking {}", bookingDto);
+                                              @RequestBody @NotNull @Valid BookingResearchDto bookingDto) {
+        log.debug("Save new booking {}", bookingDto);
         return bookingClient.saveBooking(bookingDto, userId);
     }
 
@@ -29,14 +30,14 @@ public class BookingController {
     public ResponseEntity<Object> approvedOrRejectBooking(@RequestHeader("X-Sharer-User-Id") @Min(1) Integer userId,
                                                           @PathVariable @Min(1) Integer bookingId,
                                                           @RequestParam boolean approved) {
-        log.info("Confirmation or rejection of a booking request with id = {}", bookingId);
+        log.debug("Confirmation or rejection of a booking request with id = {}", bookingId);
         return bookingClient.approvedOrRejectBooking(bookingId, userId, approved);
     }
 
     @GetMapping("/{bookingId}")
     public ResponseEntity<Object> getBooking(@RequestHeader("X-Sharer-User-Id") @Min(1) Integer userId,
                                              @PathVariable @Min(1) Integer bookingId) {
-        log.info("Get bookings with id = {}", bookingId);
+        log.debug("Get bookings with id = {}", bookingId);
         return bookingClient.getBooking(userId, bookingId);
     }
 
@@ -48,7 +49,7 @@ public class BookingController {
         if (size == null) {
             size = Integer.MAX_VALUE;
         }
-        log.info("Get bookings for user with id = {} " +
+        log.debug("Get bookings for user with id = {} " +
                 "state:{} , from = {}, size = {}", userId, state, from, size);
         return bookingClient.getBookings(userId, state, from, size);
     }
@@ -61,7 +62,7 @@ public class BookingController {
         if (size == null) {
             size = Integer.MAX_VALUE;
         }
-        log.info("Get bookings for user with id = = {}" +
+        log.debug("Get bookings for user with id = = {}" +
                 " state:{} , from = {}, size = {}", userId, state, from, size);
         return bookingClient.getBookingsOwner(userId, state, from, size);
     }
